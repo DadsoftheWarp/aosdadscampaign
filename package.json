@@ -1,0 +1,17 @@
+{
+  "name": "aos-dads-campaign",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.0.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}
