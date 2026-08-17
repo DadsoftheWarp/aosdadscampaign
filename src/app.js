@@ -42,13 +42,13 @@ const SESSION_TEMPLATE = [
 const PAINT_TIERS = [500, 1000, 1500, 2000];
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAO4sab8EC1b26sEMbp_z_vBBDOHbT3cKA",
-  authDomain: "aos-dads-campaign.firebaseapp.com",
-  projectId: "aos-dads-campaign",
-  storageBucket: "aos-dads-campaign.firebasestorage.app",
-  messagingSenderId: "189499671822",
-  appId: "1:189499671822:web:c254a939e51e1cee1a835f",
-  measurementId: "G-G6RX1J6Q5X",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);

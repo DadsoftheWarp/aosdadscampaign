@@ -30,14 +30,16 @@ A Firebase-backed standalone tracker for the Age of Sigmar escalation campaign.
    - Authentication → Google
    - Firestore database
    - Hosting
-3. In `src/app.js`, verify the `firebaseConfig` object contains your web app values:
-   - `apiKey`
-   - `authDomain`
-   - `projectId`
-   - `storageBucket`
-   - `messagingSenderId`
-   - `appId`
-   - `measurementId` (optional)
+3. Copy `.env.example` to `.env` and fill in your web app's config values (from Firebase console → Project settings → your web app):
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_STORAGE_BUCKET`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `VITE_FIREBASE_APP_ID`
+   - `VITE_FIREBASE_MEASUREMENT_ID` (optional)
+
+   `.env` is gitignored — Vite loads it automatically for both `npm run dev` and `npm run build`, and `src/app.js` reads these via `import.meta.env.VITE_*`. Note this only keeps the config out of the git repo; it still ends up in the built JS bundle, same as before — that's expected for a client-side Firebase app, since the browser needs it to connect. Firebase web API keys aren't secret by design (see [Firebase's docs](https://firebase.google.com/docs/projects/api-keys)); the real access control is Firestore Security Rules (`firestore.rules`) plus, optionally, restricting the key to specific HTTP referrers in Google Cloud Console.
 4. In `.firebaserc`, confirm the default project id matches your Firebase project:
    ```json
    {
@@ -107,6 +109,7 @@ Tracked files should include:
 - `firebase.json`
 - `.firebaserc`
 - `firestore.rules`
+- `.env.example`
 - `README.md`
 
 Ignored files:
@@ -115,6 +118,7 @@ Ignored files:
 - `.firebase_config/`
 - `node_modules/`
 - `dist/`
+- `.env` (contains your real Firebase config values)
 
 ## Notes
 
