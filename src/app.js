@@ -134,6 +134,9 @@ function generateRounds(players) {
 function pairingsForSession(sessionN) {
   const session = state.schedule.find((s) => s.n === sessionN);
   if (!session || session.type !== "main") return null;
+  if (Array.isArray(session.pairings)) {
+    return session.pairings.map((p) => [p.a, p.b ?? null]);
+  }
   const active = activePlayersFor(sessionN);
   const rounds = generateRounds(active.map((p) => p.id));
   if (!rounds.length) return [];
@@ -141,6 +144,20 @@ function pairingsForSession(sessionN) {
     state.schedule.filter((x) => x.type === "main" && x.n <= sessionN)
       .length - 1;
   return rounds[mainSessionsBefore % rounds.length];
+}
+function lockScheduleToRoster() {
+  const active = state.roster.filter((p) => p.active !== false);
+  const rounds = generateRounds(active.map((p) => p.id));
+  const mains = state.schedule.filter((s) => s.type === "main");
+  mains.forEach((session, idx) => {
+    const round = rounds.length ? rounds[idx % rounds.length] : [];
+    session.pairings = round.map(([a, b]) => ({ a, b: b ?? null }));
+  });
+}
+function scheduleIsLocked() {
+  return state.schedule.some(
+    (s) => s.type === "main" && Array.isArray(s.pairings),
+  );
 }
 function resultPoints(mode, result, inStore) {
   if (result === "bye") return 3 + (inStore ? 1 : 0);
@@ -332,6 +349,7 @@ function renderRoster() {
   const fullyPaintedCount = state.roster.filter(
     (p) => paintPoints(p) === PAINT_TIERS.length,
   ).length;
+  const locked = scheduleIsLocked();
   return `
     <p class="at-section-title">Roster</p>
     <p class="at-section-sub">Each player should sign in with Google to claim a warband and track campaign results.${ownedWarband ? " You can update your details below any time." : ""}</p>
@@ -348,7 +366,7 @@ function renderRoster() {
     ${
       state.user
         ? `<div class="at-card" style="padding:12px 16px;">
-      <div class="at-row" style="align-items:center;">
+      <div class="at-row at-row-center">
         <div class="at-field" style="flex:1;min-width:220px;">
           <label>Campaign admin</label>
           <div style="font-size:13px;">${
@@ -371,10 +389,22 @@ function renderRoster() {
             : ""
         }
       </div>
-      <p class="at-section-sub" style="margin:6px 0 0;">Only the campaign admin can mark an army's escalation tiers as fully painted and confirm entry fee payment, decided by group vote in person.</p>
+      <p class="at-section-sub" style="margin:6px 0 0;">Only the campaign admin can mark an army's escalation tiers as fully painted, confirm entry fee payment, and lock the session schedule to the current roster.</p>
       ${
         state.roster.length
           ? `<p class="at-section-sub" style="margin:4px 0 0;">Entry fees: ${paidCount}/${state.roster.length} paid · Painting: ${fullyPaintedCount}/${state.roster.length} fully painted (${PAINT_TIERS.length}/${PAINT_TIERS.length} tiers)</p>`
+          : ""
+      }
+      ${
+        isAdmin
+          ? `<div class="at-row at-row-center" style="margin-top:10px;">
+              <button class="at-btn" id="lock-schedule">${locked ? "Update schedule with current roster" : "Start campaign (lock schedule)"}</button>
+              <span class="at-section-sub" style="margin:0;">${
+                locked
+                  ? "Pairings are locked. Re-running this uses whoever is currently active."
+                  : "Locks in pairings for every main session using the players currently active."
+              }</span>
+            </div>`
           : ""
       }
     </div>`
@@ -423,9 +453,14 @@ function renderRoster() {
 }
 
 function renderSchedule() {
+  const locked = scheduleIsLocked();
   return `
     <p class="at-section-title">Schedule & Pairings</p>
-    <p class="at-section-sub">Pairings auto-generate from your active roster using a round-robin rotation. Update real session dates as you go.</p>
+    <p class="at-section-sub">${
+      locked
+        ? "Pairings are locked to the roster as of the last campaign start/update. An admin can re-run it from the Roster tab if the roster changes."
+        : "Pairings below are a live preview generated from the current active roster — ask the campaign admin to click \"Start campaign\" on the Roster tab to lock them in."
+    } Update real session dates as you go.</p>
     ${
       state.user
         ? `<div class="at-row" style="margin-bottom:10px;"><button class="at-btn secondary" id="sched-reset">Reset schedule to template</button></div>`
@@ -459,7 +494,7 @@ function renderSchedule() {
           return `
           <div class="at-sched-row">
             <div class="at-sched-n">${session.n}</div>
-            <div>
+            <div class="at-sched-phase-wrap">
               <span class="at-pill ${session.type}">${session.type}</span>
               <div class="at-sched-phase">${esc(session.phase)}</div>
             </div>
@@ -632,6 +667,23 @@ function wireRoster() {
       await saveCampaign();
     });
 
+  document
+    .getElementById("lock-schedule")
+    ?.addEventListener("click", async () => {
+      const activeCount = state.roster.filter((p) => p.active !== false).length;
+      if (activeCount < 2) {
+        alert("Add at least 2 active players before starting the campaign.");
+        return;
+      }
+      const locked = scheduleIsLocked();
+      const msg = locked
+        ? "Update the schedule using the currently active roster? This overwrites the pairings for every main session going forward. Log entries you've already added aren't affected."
+        : "Start the campaign? This locks in pairings for every main session using the currently active roster. You can run this again later if the roster changes.";
+      if (!confirm(msg)) return;
+      lockScheduleToRoster();
+      await saveCampaign();
+    });
+
   ROOT.querySelectorAll("[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const player = playerById(btn.dataset.toggle);
@@ -678,7 +730,7 @@ function wireSchedule() {
   document.getElementById("sched-reset")?.addEventListener("click", async () => {
     if (
       !confirm(
-        "Reset the schedule to the current template? This restores the default session phases, points, types, and dates — any custom dates or notes you've entered will be overwritten.",
+        "Reset the schedule to the current template? This restores the default session phases, points, types, and dates, and clears any locked pairings — any custom dates or notes you've entered will be overwritten.",
       )
     )
       return;

@@ -221,6 +221,9 @@ button {
   flex-wrap: wrap;
   align-items: flex-end;
 }
+.at-row-center {
+  align-items: center;
+}
 .at-field {
   display: flex;
   flex-direction: column;
@@ -635,23 +638,70 @@ button {
   .at-body {
     padding: 20px;
   }
+  .at-player-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 10px;
+  }
+  .at-player-info {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+  .at-player-row > .at-btn {
+    flex: 0 1 auto;
+  }
   .at-row {
     flex-direction: column;
+    align-items: stretch;
+  }
+  .at-row-center {
     align-items: stretch;
   }
   .at-field {
     flex: 1 1 100%;
   }
   .at-sched-row {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "n phase"
+      "points points"
+      "pairs pairs"
+      "date date";
+    align-items: start;
+    row-gap: 8px;
+    column-gap: 10px;
+  }
+  .at-sched-n {
+    grid-area: n;
+    width: auto;
+  }
+  .at-sched-phase-wrap {
+    grid-area: phase;
+  }
+  .at-sched-phase {
+    width: auto;
+  }
+  .at-sched-points {
+    grid-area: points;
+    width: auto;
+  }
+  .at-sched-pairs {
+    grid-area: pairs;
+  }
+  .at-sched-date {
+    grid-area: date;
+  }
+  .at-sched-date input {
+    width: 100%;
   }
   .at-nav {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     overflow-x: visible;
     padding: 0 12px;
   }
   .at-nav button {
-    flex: 1 1 auto;
     text-align: center;
     padding: 12px 8px 10px;
   }
